@@ -1,0 +1,153 @@
+services:
+  customer_postgres_db:
+    container_name: customer_postgres_db
+    image: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: customer
+      PGDATA: /data/customer_postgres_db
+    volumes:
+      - customer_postgres_db:/data/customer_postgres_db
+    ports:
+      - "5432:5432"
+    networks:
+      - customer_postgres
+    restart: unless-stopped
+
+  fraud_postgres_db:
+    container_name: fraud_postgres_db
+    image: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: fraud
+      PGDATA: /data/fraud_postgres_db
+    volumes:
+      - fraud_postgres_db:/data/fraud_postgres_db
+    ports:
+      - "5433:5432"
+    networks:
+      - fraud_postgres
+    restart: unless-stopped
+
+  notification_postgres_db:
+    container_name: notification_postgres_db
+    image: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: notification
+      PGDATA: /data/notification_postgres_db
+    volumes:
+      - notification_postgres_db:/data/notification_postgres_db
+    ports:
+      - "5434:5432"
+    networks:
+      - notification_postgres
+    restart: unless-stopped
+
+  zipkin:
+    image: openzipkin/zipkin
+    container_name: zipkin
+    ports:
+      - "9411:9411"
+    networks:
+      - spring
+
+  rabbitmq:
+    image: rabbitmq:3.9.11-management-alpine
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - spring
+
+#  eureka-server:
+#    image: ansseii/eureka-server:latest
+#    container_name: eureka-server
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#    ports:
+#      - "8761:8761"
+#    networks:
+#      - spring
+#    depends_on:
+#      - zipkin
+
+  api-gateway:
+    image: ansseii/api-gateway:latest
+    container_name: api-gateway
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    ports:
+      - "8083:8083"
+    networks:
+      - spring
+    depends_on:
+      - zipkin
+#      - eureka-server
+
+  customer:
+    image: ansseii/customer:latest
+    container_name: customer
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    ports:
+      - "8080:8080"
+    networks:
+      - spring
+      - customer_postgres
+    depends_on:
+      - zipkin
+      - rabbitmq
+#      - eureka-server
+      - customer_postgres_db
+
+  fraud:
+    image: ansseii/fraud:latest
+    container_name: fraud
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    ports:
+      - "8081:8081"
+    networks:
+      - spring
+      - fraud_postgres
+    depends_on:
+      - zipkin
+      - rabbitmq
+#      - eureka-server
+      - fraud_postgres_db
+
+  notification:
+    image: ansseii/notification:latest
+    container_name: notification
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    ports:
+      - "8082:8082"
+    networks:
+      - notification_postgres
+      - spring
+    depends_on:
+      - zipkin
+      - rabbitmq
+#      - eureka-server
+      - notification_postgres_db
+
+networks:
+  customer_postgres:
+    driver: bridge
+  fraud_postgres:
+    driver: bridge
+  notification_postgres:
+    driver: bridge
+  spring:
+    driver: bridge
+
+volumes:
+  customer_postgres_db:
+  fraud_postgres_db:
+  notification_postgres_db:

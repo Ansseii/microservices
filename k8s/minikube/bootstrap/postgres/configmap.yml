@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-config
+data:
+  01_init_db.sql: |-
+    CREATE DATABASE customer;
+    CREATE DATABASE fraud;
+    CREATE DATABASE notification;
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: postgres

@@ -1,0 +1,22 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: customer
+  zipkin:
+    base-url: http://zipkin:9411
+  datasource:
+    password: postgres
+    url: jdbc:postgresql://postgres:5432/customer
+    username: postgres
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: true
+  rabbitmq:
+    addresses: rabbitmq:5672
